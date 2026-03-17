@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card border-0 rounded-4 shadow-sm">
+            <div class="card-body p-5">
+                <p class="text-uppercase text-muted fw-semibold mb-2">Benutzeranmeldung</p>
+                <h2 class="section-title mb-3">Login</h2>
+                <p class="text-muted mb-4">
+                    Melden Sie sich mit Ihrem Benutzernamen und Passwort an, um auf das Dashboard
+                    und die Mietfunktionen von ScootNow zuzugreifen.
+                </p>
+
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Benutzername</label>
+                        <input type="text" name="username" class="form-control form-control-lg rounded-3" required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">Passwort</label>
+                        <input type="password" name="password" class="form-control form-control-lg rounded-3" required>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary-custom btn-lg">Einloggen</button>
+                    </div>
+                </form>
+
+                <hr class="my-4">
+
+                <p class="mb-0 text-muted">
+                    Noch kein Benutzerkonto?
+                    <a href="{{ url_for('register') }}">Jetzt registrieren</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

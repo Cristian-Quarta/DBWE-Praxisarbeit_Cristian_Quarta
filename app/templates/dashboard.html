@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <p class="text-uppercase text-muted fw-semibold mb-1">Benutzerbereich</p>
+        <h2 class="section-title mb-0">Dashboard</h2>
+    </div>
+    <div class="text-end">
+        <div class="text-muted">Angemeldet als</div>
+        <div class="fw-bold">{{ current_user.username }}</div>
+    </div>
+</div>
+
+{% if current_user.role == "rider" %}
+<div class="mb-4">
+    <a href="{{ url_for('payment_methods') }}" class="btn btn-outline-primary">
+        Zahlungsmittel verwalten
+    </a>
+</div>
+{% endif %}
+
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="card stats-card h-100">
+            <div class="card-body p-4">
+                <h3 class="mb-1">{{ scooters|selectattr("status", "equalto", "available")|list|length }}</h3>
+                <p class="mb-0">Verfügbare Scooter</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card stats-card h-100">
+            <div class="card-body p-4">
+                <h3 class="mb-1">{{ rentals|length }}</h3>
+                <p class="mb-0">Gesamte Fahrten</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card stats-card h-100">
+            <div class="card-body p-4">
+                {% if active_rental %}
+                    <h3 class="mb-1 text-danger">Aktiv</h3>
+                    <p class="mb-0">Eine laufende Fahrt ist vorhanden</p>
+                {% else %}
+                    <h3 class="mb-1 text-success">Keine</h3>
+                    <p class="mb-0">Zurzeit keine aktive Fahrt</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if payment_methods_list is defined and payment_methods_list %}
+<div class="card border-0 rounded-4 shadow-sm mb-4">
+    <div class="card-body p-4">
+        <p class="text-uppercase text-muted fw-semibold mb-2">Hinterlegte Zahlungsmittel</p>
+        <ul class="mb-0">
+            {% for method in payment_methods_list %}
+                <li>{{ method.brand }} - {{ method.card_number_masked }} - {{ method.card_holder }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
+
+{% if active_rental %}
+<div class="card border-0 rounded-4 shadow-sm mb-5">
+    <div class="card-body p-4">
+        <p class="text-uppercase text-muted fw-semibold mb-2">Laufender Mietvorgang</p>
+        <h4 class="section-title mb-3">Aktive Fahrt</h4>
+
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <p class="mb-1"><strong>Scooter-Code</strong></p>
+                <p>{{ active_rental.scooter.scooter_code }}</p>
+            </div>
+            <div class="col-md-4">
+                <p class="mb-1"><strong>Modell</strong></p>
+                <p>{{ active_rental.scooter.model }}</p>
+            </div>
+            <div class="col-md-4">
+                <p class="mb-1"><strong>Startzeitpunkt</strong></p>
+                <p>{{ active_rental.start_time }}</p>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('end_rental', rental_id=active_rental.id) }}">
+            <button class="btn btn-danger btn-lg">Fahrt beenden</button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+{% if not active_rental %}
+<h3 class="section-title mb-3">Verfügbare Scooter</h3>
+
+<div class="row mb-5">
+    {% for scooter in scooters %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card scooter-card h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h5 class="fw-bold mb-1">{{ scooter.scooter_code }}</h5>
+                            <div class="text-muted">{{ scooter.model }}</div>
+                        </div>
+
+                        {% if scooter.status == "available" and scooter.battery_level >= 20 %}
+                            <span class="badge rounded-pill bg-success">Verfügbar</span>
+                        {% elif scooter.battery_level < 20 %}
+                            <span class="badge rounded-pill bg-warning text-dark">Akku tief</span>
+                        {% else %}
+                            <span class="badge rounded-pill bg-secondary">{{ scooter.status }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="row align-items-center mb-3">
+                        <div class="col-7">
+                            <p class="mb-2"><strong>Standort:</strong> {{ scooter.location }}</p>
+                            <p class="mb-2"><strong>Akkustand:</strong> {{ scooter.battery_level }}%</p>
+                            <p class="mb-2"><strong>Preis pro Minute:</strong> CHF {{ scooter.price_per_minute }}</p>
+                            <p class="mb-0"><strong>QR-Code:</strong> {{ scooter.qr_code }}</p>
+                        </div>
+
+                        <div class="col-5 text-center">
+                            <img
+                                src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data={{ scooter.qr_code }}"
+                                alt="QR-Code {{ scooter.qr_code }}"
+                                class="img-fluid border rounded-3 p-2 bg-white"
+                            >
+                            <div class="small text-muted mt-2">Scan-Simulation</div>
+                        </div>
+                    </div>
+
+                    {% if scooter.status == "available" and scooter.battery_level >= 20 %}
+                        <form method="POST" action="{{ url_for('rent_scooter', scooter_id=scooter.id) }}">
+                            <input type="hidden" name="qr_code_input" value="{{ scooter.qr_code }}">
+                            <button class="btn btn-primary-custom w-100">Per QR-Code entsperren</button>
+                        </form>
+                    {% else %}
+                        <button class="btn btn-outline-secondary w-100" disabled>Nicht verfügbar</button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<h3 class="section-title mb-3">Bisherige Fahrten</h3>
+
+<div class="card border-0 rounded-4 shadow-sm">
+    <div class="card-body p-4">
+        {% if rentals %}
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Scooter</th>
+                            <th>Status</th>
+                            <th>Dauer</th>
+                            <th>Preis</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for rental in rentals %}
+                            <tr>
+                                <td>{{ rental.id }}</td>
+                                <td>{{ rental.scooter.scooter_code }}</td>
+                                <td>{{ rental.status }}</td>
+                                <td>{{ rental.duration_minutes if rental.duration_minutes else "-" }} Min.</td>
+                                <td>
+                                    {% if rental.total_price %}
+                                        CHF {{ rental.total_price }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="mb-0 text-muted">Es sind noch keine Fahrten vorhanden.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

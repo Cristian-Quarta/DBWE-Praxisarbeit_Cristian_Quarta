@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="section-title mb-4">Zahlungsmittel</h2>
+
+<form method="POST" class="mb-4">
+
+<div class="mb-3">
+<label class="form-label">Karteninhaber</label>
+<input name="card_holder" class="form-control" required>
+</div>
+
+<div class="mb-3">
+<label class="form-label">Kartennummer</label>
+<input name="card_number" class="form-control" required>
+</div>
+
+<div class="mb-3">
+<label class="form-label">Ablaufmonat</label>
+<input name="expiry_month" class="form-control">
+</div>
+
+<div class="mb-3">
+<label class="form-label">Ablaufjahr</label>
+<input name="expiry_year" class="form-control">
+</div>
+
+<div class="mb-3">
+<label class="form-label">Marke</label>
+<input name="brand" class="form-control">
+</div>
+
+<button class="btn btn-primary-custom">
+Karte speichern
+</button>
+
+</form>
+
+<ul class="list-group">
+
+{% for method in methods %}
+
+<li class="list-group-item">
+{{ method.brand }} - {{ method.card_number_masked }}
+</li>
+
+{% endfor %}
+
+</ul>
+
+{% endblock %}

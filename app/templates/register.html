@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="card border-0 rounded-4 shadow-sm">
+            <div class="card-body p-5">
+                <p class="text-uppercase text-muted fw-semibold mb-2">Neues Benutzerkonto</p>
+                <h2 class="section-title mb-3">Registrierung</h2>
+                <p class="text-muted mb-4">
+                    Erfassen Sie einen eindeutigen Benutzernamen, eine gültige E-Mail-Adresse,
+                    ein Passwort sowie eine Rolle, um ScootNow nutzen zu können.
+                </p>
+
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Benutzername</label>
+                        <input type="text" name="username" class="form-control form-control-lg rounded-3" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">E-Mail-Adresse</label>
+                        <input type="email" name="email" class="form-control form-control-lg rounded-3" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Rolle</label>
+                        <select name="role" class="form-select form-select-lg rounded-3" required>
+                            <option value="rider">Fahrer / Nutzer</option>
+                            <option value="provider">Verleihanbieter</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">Passwort</label>
+                        <input type="password" name="password" class="form-control form-control-lg rounded-3" required>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary-custom btn-lg">Registrieren</button>
+                    </div>
+                </form>
+
+                <hr class="my-4">
+
+                <p class="mb-0 text-muted">
+                    Bereits registriert?
+                    <a href="{{ url_for('login') }}">Zum Login</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

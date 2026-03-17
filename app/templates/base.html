@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ScootNow</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f4f7fb;
+        }
+
+        .navbar-custom {
+            background-color: #0f2747;
+        }
+
+        .navbar-custom .navbar-brand,
+        .navbar-custom .nav-link {
+            color: #ffffff !important;
+        }
+
+        .hero-box {
+            background: linear-gradient(135deg, #16345f 0%, #244b84 100%);
+            color: white;
+            border-radius: 24px;
+            padding: 48px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.10);
+        }
+
+        .stats-card,
+        .feature-card,
+        .scooter-card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 8px 20px rgba(15, 39, 71, 0.08);
+        }
+
+        .stats-card h3 {
+            color: #16345f;
+            font-weight: 700;
+        }
+
+        .section-title {
+            color: #16345f;
+            font-weight: 700;
+        }
+
+        .btn-primary-custom {
+            background-color: #16345f;
+            border-color: #16345f;
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .btn-primary-custom:hover {
+            background-color: #0f2747;
+            border-color: #0f2747;
+            color: #ffffff;
+        }
+
+        .badge-custom {
+            background-color: #16345f;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-custom shadow-sm">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="{{ url_for('home') }}">ScootNow</a>
+
+        <button class="navbar-toggler bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="mainNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('home') }}">Start</a>
+                </li>
+
+                {% if current_user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('register') }}">Registrieren</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="alert alert-info shadow-sm border-0 rounded-4">
+                {% for message in messages %}
+                    <div>{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
