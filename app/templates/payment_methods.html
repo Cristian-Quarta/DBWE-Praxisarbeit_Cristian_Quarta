@@ -1,51 +1,92 @@
+{# ==============================================================
+   payment_methods.html – Zahlungsmittel-Verwaltung von ScootNow
+   Nur für eingeloggte Benutzer mit Rolle "rider" zugänglich.
+   Zeigt ein Formular zum Hinzufügen einer Kreditkarte sowie
+   eine Liste aller bereits hinterlegten Zahlungsmittel.
+   Wichtig: Die Kartennummer wird nur maskiert gespeichert
+   (nur letzte 4 Ziffern) – niemals im Klartext.
+   Erbt das Basis-Layout von base.html.
+   Autor: Cristian Quarta | DBWE.TA1A.PA | 2026
+   ============================================================== #}
+
 {% extends "base.html" %}
 
 {% block content %}
+
+{# Seitentitel #}
 <h2 class="section-title mb-4">Zahlungsmittel</h2>
 
+{# -------------------------------------------------------
+   Zahlungsmittel-Formular
+   Sendet POST-Request an /payment-methods (gleiche URL).
+   Die Verarbeitung erfolgt in routes.py (payment_methods-Funktion).
+   Pflichtfelder: Karteninhaber, Kartennummer, Ablaufmonat, Ablaufjahr.
+   Die Kartennummer wird in routes.py sofort maskiert:
+   "**** **** **** " + letzte 4 Ziffern.
+   ------------------------------------------------------- #}
 <form method="POST" class="mb-4">
 
-<div class="mb-3">
-<label class="form-label">Karteninhaber</label>
-<input name="card_holder" class="form-control" required>
-</div>
+    {# Eingabefeld: Karteninhaber – Name wie auf der Karte #}
+    <div class="mb-3">
+        <label class="form-label">Karteninhaber</label>
+        <input name="card_holder"
+               class="form-control"
+               required>
+    </div>
 
-<div class="mb-3">
-<label class="form-label">Kartennummer</label>
-<input name="card_number" class="form-control" required>
-</div>
+    {# Eingabefeld: Kartennummer (vollständig)
+       Wird in routes.py sofort maskiert – nur letzte 4 Ziffern
+       werden in der Datenbank gespeichert (Datenschutz). #}
+    <div class="mb-3">
+        <label class="form-label">Kartennummer</label>
+        <input name="card_number"
+               class="form-control"
+               required>
+    </div>
 
-<div class="mb-3">
-<label class="form-label">Ablaufmonat</label>
-<input name="expiry_month" class="form-control">
-</div>
+    {# Eingabefeld: Ablaufmonat (z.B. "12")
+       Wird als String gespeichert (expiry_month in models.py) #}
+    <div class="mb-3">
+        <label class="form-label">Ablaufmonat</label>
+        <input name="expiry_month"
+               class="form-control">
+    </div>
 
-<div class="mb-3">
-<label class="form-label">Ablaufjahr</label>
-<input name="expiry_year" class="form-control">
-</div>
+    {# Eingabefeld: Ablaufjahr (z.B. "2028")
+       Wird als String gespeichert (expiry_year in models.py) #}
+    <div class="mb-3">
+        <label class="form-label">Ablaufjahr</label>
+        <input name="expiry_year"
+               class="form-control">
+    </div>
 
-<div class="mb-3">
-<label class="form-label">Marke</label>
-<input name="brand" class="form-control">
-</div>
+    {# Eingabefeld: Kartenmarke (z.B. "Visa", "Mastercard") – optional #}
+    <div class="mb-3">
+        <label class="form-label">Marke</label>
+        <input name="brand"
+               class="form-control">
+    </div>
 
-<button class="btn btn-primary-custom">
-Karte speichern
-</button>
-
+    {# Submit-Button: Speichert das Zahlungsmittel in der Datenbank #}
+    <button class="btn btn-primary-custom">
+        Karte speichern
+    </button>
 </form>
 
+{# -------------------------------------------------------
+   Liste der hinterlegten Zahlungsmittel
+   Zeigt alle Zahlungsmittel des eingeloggten Riders.
+   Daten werden von routes.py übergeben (methods-Variable).
+   Kartennummer wird nur maskiert angezeigt (z.B. **** **** **** 4242).
+   ------------------------------------------------------- #}
 <ul class="list-group">
-
-{% for method in methods %}
-
-<li class="list-group-item">
-{{ method.brand }} - {{ method.card_number_masked }}
-</li>
-
-{% endfor %}
-
+    {# Jinja2-Schleife: Iteriert über alle Zahlungsmittel des Riders #}
+    {% for method in methods %}
+        {# Zeigt Kartenmarke und maskierte Kartennummer #}
+        <li class="list-group-item">
+            {{ method.brand }} - {{ method.card_number_masked }}
+        </li>
+    {% endfor %}
 </ul>
 
 {% endblock %}
