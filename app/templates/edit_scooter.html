@@ -1,64 +1,160 @@
+{# ==============================================================
+   edit_scooter.html – Scooter bearbeiten von ScootNow
+   Nur für eingeloggte Benutzer mit Rolle "provider" zugänglich.
+   Zeigt ein vorausgefülltes Formular mit den aktuellen Werten
+   des zu bearbeitenden Scooters.
+   Wichtig: Scooter-Code und QR-Code können nicht verändert werden
+   (nicht im Formular vorhanden – Schutz vor Duplikaten).
+   Bei Erfolg: Weiterleitung zum Provider-Dashboard.
+   Erbt das Basis-Layout von base.html.
+   Autor: Cristian Quarta | DBWE.TA1A.PA | 2026
+   ============================================================== #}
+
 {% extends "base.html" %}
 
 {% block content %}
+
+{# Zentrierte Karte – max. 8 Spalten breit (col-lg-8) #}
 <div class="row justify-content-center">
     <div class="col-lg-8">
         <div class="card border-0 rounded-4 shadow-sm">
             <div class="card-body p-5">
+
+                {# Seitentitel #}
                 <p class="text-uppercase text-muted fw-semibold mb-2">Scooter-Verwaltung</p>
                 <h2 class="section-title mb-4">Scooter bearbeiten</h2>
 
+                {# -------------------------------------------------------
+                   Scooter-Bearbeitungsformular
+                   Sendet POST-Request an /provider/scooters/edit/{id}.
+                   Die Verarbeitung erfolgt in routes.py (edit_scooter-Funktion).
+                   Alle Felder sind mit den aktuellen Datenbankwerten vorausgefüllt
+                   (via Jinja2-Ausdruck value="{{ scooter.attribut }}").
+                   Rollenprüfung und Berechtigungsprüfung erfolgen serverseitig.
+                   ------------------------------------------------------- #}
                 <form method="POST">
+
+                    {# Pflichtfeld: Modell – vorausgefüllt mit aktuellem Wert
+                       Jinja2-Ausdruck {{ scooter.model }} gibt den aktuellen
+                       Datenbankwert als Standardwert des Eingabefeldes aus. #}
                     <div class="mb-3">
                         <label class="form-label">Modell</label>
-                        <input name="model" value="{{ scooter.model }}" class="form-control form-control-lg rounded-3" required>
+                        <input name="model"
+                               value="{{ scooter.model }}"
+                               class="form-control form-control-lg rounded-3"
+                               required>
                     </div>
 
+                    {# Pflichtfeld: Akkustand in Prozent (0–100)
+                       Vorausgefüllt mit aktuellem Akkustand aus der Datenbank.
+                       Scooter mit Akkustand < 20% können nicht gemietet werden. #}
                     <div class="mb-3">
                         <label class="form-label">Akkustand (%)</label>
-                        <input name="battery_level" value="{{ scooter.battery_level }}" type="number" class="form-control form-control-lg rounded-3" required>
+                        <input name="battery_level"
+                               value="{{ scooter.battery_level }}"
+                               type="number"
+                               class="form-control form-control-lg rounded-3"
+                               required>
                     </div>
 
+                    {# Pflichtfeld: Textuelle Standortbeschreibung
+                       Vorausgefüllt mit aktuellem Standort aus der Datenbank. #}
                     <div class="mb-3">
                         <label class="form-label">Standort</label>
-                        <input name="location" value="{{ scooter.location }}" class="form-control form-control-lg rounded-3" required>
+                        <input name="location"
+                               value="{{ scooter.location }}"
+                               class="form-control form-control-lg rounded-3"
+                               required>
                     </div>
 
+                    {# Optionales Feld: GPS-Breitengrad (Latitude)
+                       Jinja2-Bedingung: Zeigt den Wert wenn vorhanden,
+                       sonst leeres Feld (leerer String statt "None").
+                       step="any" erlaubt Dezimalzahlen (z.B. 47.378177). #}
                     <div class="mb-3">
                         <label class="form-label">Latitude</label>
-                        <input name="latitude" value="{{ scooter.latitude if scooter.latitude is not none else '' }}" type="number" step="any" class="form-control form-control-lg rounded-3">
+                        <input name="latitude"
+                               value="{{ scooter.latitude if scooter.latitude is not none else '' }}"
+                               type="number"
+                               step="any"
+                               class="form-control form-control-lg rounded-3">
                     </div>
 
+                    {# Optionales Feld: GPS-Längengrad (Longitude)
+                       Gleiche Logik wie Latitude – leerer String wenn None. #}
                     <div class="mb-3">
                         <label class="form-label">Longitude</label>
-                        <input name="longitude" value="{{ scooter.longitude if scooter.longitude is not none else '' }}" type="number" step="any" class="form-control form-control-lg rounded-3">
+                        <input name="longitude"
+                               value="{{ scooter.longitude if scooter.longitude is not none else '' }}"
+                               type="number"
+                               step="any"
+                               class="form-control form-control-lg rounded-3">
                     </div>
 
+                    {# Pflichtfeld: Preis pro Minute in CHF
+                       step="0.01" erlaubt Dezimalzahlen mit 2 Nachkommastellen.
+                       Vorausgefüllt mit aktuellem Wert aus der Datenbank. #}
                     <div class="mb-3">
                         <label class="form-label">Preis pro Minute</label>
-                        <input name="price_per_minute" value="{{ scooter.price_per_minute }}" type="number" step="0.01" class="form-control form-control-lg rounded-3" required>
+                        <input name="price_per_minute"
+                               value="{{ scooter.price_per_minute }}"
+                               type="number"
+                               step="0.01"
+                               class="form-control form-control-lg rounded-3"
+                               required>
                     </div>
 
+                    {# Pflichtfeld: Basispreis pro Mietvorgang in CHF
+                       Vorausgefüllt mit aktuellem Wert aus der Datenbank. #}
                     <div class="mb-3">
                         <label class="form-label">Basispreis</label>
-                        <input name="base_price" value="{{ scooter.base_price }}" type="number" step="0.01" class="form-control form-control-lg rounded-3" required>
+                        <input name="base_price"
+                               value="{{ scooter.base_price }}"
+                               type="number"
+                               step="0.01"
+                               class="form-control form-control-lg rounded-3"
+                               required>
                     </div>
 
+                    {# Dropdown: Scooter-Status
+                       Drei mögliche Zustände:
+                       - available:   Scooter ist verfügbar und kann gemietet werden
+                       - maintenance: Scooter ist in Wartung – nicht mietbar
+                       - rented:      Scooter ist aktuell vermietet
+                       Jinja2-Bedingung "selected" markiert den aktuellen
+                       Datenbankwert als vorausgewählte Option. #}
                     <div class="mb-4">
                         <label class="form-label">Status</label>
-                        <select name="status" class="form-select form-select-lg rounded-3" required>
-                            <option value="available" {% if scooter.status == "available" %}selected{% endif %}>available</option>
-                            <option value="maintenance" {% if scooter.status == "maintenance" %}selected{% endif %}>maintenance</option>
-                            <option value="rented" {% if scooter.status == "rented" %}selected{% endif %}>rented</option>
+                        <select name="status"
+                                class="form-select form-select-lg rounded-3"
+                                required>
+                            {# Jinja2 setzt "selected" beim aktuell gespeicherten Status #}
+                            <option value="available"
+                                {% if scooter.status == "available" %}selected{% endif %}>
+                                available
+                            </option>
+                            <option value="maintenance"
+                                {% if scooter.status == "maintenance" %}selected{% endif %}>
+                                maintenance
+                            </option>
+                            <option value="rented"
+                                {% if scooter.status == "rented" %}selected{% endif %}>
+                                rented
+                            </option>
                         </select>
                     </div>
 
+                    {# Submit-Button: Speichert die Änderungen in der Datenbank #}
                     <div class="d-grid">
-                        <button class="btn btn-primary-custom btn-lg">Änderungen speichern</button>
+                        <button class="btn btn-primary-custom btn-lg">
+                            Änderungen speichern
+                        </button>
                     </div>
+
                 </form>
             </div>
         </div>
     </div>
 </div>
+
 {% endblock %}
