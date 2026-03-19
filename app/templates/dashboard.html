@@ -1,6 +1,21 @@
+{# ==============================================================
+   dashboard.html – Rider-Dashboard von ScootNow
+   Nur für eingeloggte Benutzer mit Rolle "rider" zugänglich.
+   Zeigt: Statistiken, Zahlungsmittel, aktive Fahrt,
+          verfügbare Scooter und Fahrhistorie.
+   Erbt das Basis-Layout von base.html.
+   Autor: Cristian Quarta | DBWE.TA1A.PA | 2026
+   ============================================================== #}
+
 {% extends "base.html" %}
 
 {% block content %}
+
+{# -------------------------------------------------------
+   Dashboard-Header
+   Zeigt Seitentitel und den eingeloggten Benutzernamen.
+   current_user wird von flask_login bereitgestellt.
+   ------------------------------------------------------- #}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <p class="text-uppercase text-muted fw-semibold mb-1">Benutzerbereich</p>
@@ -12,6 +27,7 @@
     </div>
 </div>
 
+{# Button "Zahlungsmittel verwalten" – nur für Rider sichtbar #}
 {% if current_user.role == "rider" %}
 <div class="mb-4">
     <a href="{{ url_for('payment_methods') }}" class="btn btn-outline-primary">
@@ -20,16 +36,28 @@
 </div>
 {% endif %}
 
+{# -------------------------------------------------------
+   Statistik-Karten (3 Spalten)
+   Karte 1: Anzahl verfügbarer Scooter (Jinja2-Filter)
+   Karte 2: Gesamtanzahl Fahrten des Riders
+   Karte 3: Status aktive Fahrt (rot=aktiv, grün=keine)
+   ------------------------------------------------------- #}
 <div class="row mb-4">
+
+    {# Karte 1: Verfügbare Scooter
+       Jinja2-Filter selectattr zählt nur Scooter mit status="available" #}
     <div class="col-md-4 mb-3">
         <div class="card stats-card h-100">
             <div class="card-body p-4">
-                <h3 class="mb-1">{{ scooters|selectattr("status", "equalto", "available")|list|length }}</h3>
+                <h3 class="mb-1">
+                    {{ scooters|selectattr("status", "equalto", "available")|list|length }}
+                </h3>
                 <p class="mb-0">Verfügbare Scooter</p>
             </div>
         </div>
     </div>
 
+    {# Karte 2: Gesamte Fahrten des eingeloggten Riders #}
     <div class="col-md-4 mb-3">
         <div class="card stats-card h-100">
             <div class="card-body p-4">
@@ -39,6 +67,9 @@
         </div>
     </div>
 
+    {# Karte 3: Aktive Fahrt-Status
+       Rot "Aktiv" wenn eine laufende Miete vorhanden,
+       Grün "Keine" wenn kein aktiver Mietvorgang läuft #}
     <div class="col-md-4 mb-3">
         <div class="card stats-card h-100">
             <div class="card-body p-4">
@@ -54,12 +85,20 @@
     </div>
 </div>
 
+{# -------------------------------------------------------
+   Hinterlegte Zahlungsmittel
+   Wird nur angezeigt wenn mindestens ein Zahlungsmittel
+   vorhanden ist. Zeigt Kartenmarke, maskierte Nummer
+   und Karteninhabername.
+   ------------------------------------------------------- #}
 {% if payment_methods_list is defined and payment_methods_list %}
 <div class="card border-0 rounded-4 shadow-sm mb-4">
     <div class="card-body p-4">
         <p class="text-uppercase text-muted fw-semibold mb-2">Hinterlegte Zahlungsmittel</p>
         <ul class="mb-0">
+            {# Jinja2-Schleife: Iteriert über alle Zahlungsmittel des Riders #}
             {% for method in payment_methods_list %}
+                {# Format: Kartenmarke - maskierte Nummer - Karteninhaber #}
                 <li>{{ method.brand }} - {{ method.card_number_masked }} - {{ method.card_holder }}</li>
             {% endfor %}
         </ul>
@@ -67,12 +106,19 @@
 </div>
 {% endif %}
 
+{# -------------------------------------------------------
+   Aktive Fahrt
+   Wird nur angezeigt wenn eine laufende Miete vorhanden.
+   Zeigt Scooter-Details und Button zum Beenden der Fahrt.
+   Das Formular sendet POST an /end_rental/{rental_id}.
+   ------------------------------------------------------- #}
 {% if active_rental %}
 <div class="card border-0 rounded-4 shadow-sm mb-5">
     <div class="card-body p-4">
         <p class="text-uppercase text-muted fw-semibold mb-2">Laufender Mietvorgang</p>
         <h4 class="section-title mb-3">Aktive Fahrt</h4>
 
+        {# Details zur aktiven Fahrt: Scooter-Code, Modell, Startzeit #}
         <div class="row mb-3">
             <div class="col-md-4">
                 <p class="mb-1"><strong>Scooter-Code</strong></p>
@@ -88,6 +134,9 @@
             </div>
         </div>
 
+        {# Formular: Fahrt beenden
+           POST-Request an /end_rental/{rental_id}
+           Löst in routes.py die Preisberechnung aus #}
         <form method="POST" action="{{ url_for('end_rental', rental_id=active_rental.id) }}">
             <button class="btn btn-danger btn-lg">Fahrt beenden</button>
         </form>
@@ -95,20 +144,31 @@
 </div>
 {% endif %}
 
+{# -------------------------------------------------------
+   Verfügbare Scooter
+   Wird nur angezeigt wenn KEINE aktive Fahrt läuft.
+   Zeigt alle Scooter mit Status-Badge, Details und
+   QR-Code-Bild (generiert via externem API-Dienst).
+   Mietformular wird nur für verfügbare Scooter angezeigt.
+   ------------------------------------------------------- #}
 {% if not active_rental %}
 <h3 class="section-title mb-3">Verfügbare Scooter</h3>
 
 <div class="row mb-5">
+    {# Jinja2-Schleife: Iteriert über alle Scooter #}
     {% for scooter in scooters %}
         <div class="col-md-6 col-lg-4 mb-4">
             <div class="card scooter-card h-100">
                 <div class="card-body p-4">
+
+                    {# Scooter-Header: Code, Modell und Status-Badge
+                       Dreistufige Badge-Logik (identisch zu home.html):
+                       Grün = verfügbar, Gelb = Akku tief, Grau = vermietet #}
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <div>
                             <h5 class="fw-bold mb-1">{{ scooter.scooter_code }}</h5>
                             <div class="text-muted">{{ scooter.model }}</div>
                         </div>
-
                         {% if scooter.status == "available" and scooter.battery_level >= 20 %}
                             <span class="badge rounded-pill bg-success">Verfügbar</span>
                         {% elif scooter.battery_level < 20 %}
@@ -119,6 +179,7 @@
                     </div>
 
                     <div class="row align-items-center mb-3">
+                        {# Scooter-Details: Standort, Akku, Preis und QR-Code-Text #}
                         <div class="col-7">
                             <p class="mb-2"><strong>Standort:</strong> {{ scooter.location }}</p>
                             <p class="mb-2"><strong>Akkustand:</strong> {{ scooter.battery_level }}%</p>
@@ -126,6 +187,9 @@
                             <p class="mb-0"><strong>QR-Code:</strong> {{ scooter.qr_code }}</p>
                         </div>
 
+                        {# QR-Code-Bild: Wird dynamisch via externem Dienst generiert.
+                           URL-Parameter "data" enthält den Scooter-QR-Code-Wert.
+                           Simuliert das Scannen eines physischen QR-Codes. #}
                         <div class="col-5 text-center">
                             <img
                                 src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data={{ scooter.qr_code }}"
@@ -136,14 +200,20 @@
                         </div>
                     </div>
 
+                    {# Mietformular – nur für verfügbare Scooter mit Akku >= 20%
+                       Der QR-Code wird als Hidden-Input mitgesendet und in
+                       routes.py mit dem Datenbankwert verglichen (Validierung). #}
                     {% if scooter.status == "available" and scooter.battery_level >= 20 %}
                         <form method="POST" action="{{ url_for('rent_scooter', scooter_id=scooter.id) }}">
+                            {# QR-Code als verstecktes Formularfeld – simuliert den Scan #}
                             <input type="hidden" name="qr_code_input" value="{{ scooter.qr_code }}">
                             <button class="btn btn-primary-custom w-100">Per QR-Code entsperren</button>
                         </form>
                     {% else %}
+                        {# Deaktivierter Button für nicht verfügbare Scooter #}
                         <button class="btn btn-outline-secondary w-100" disabled>Nicht verfügbar</button>
                     {% endif %}
+
                 </div>
             </div>
         </div>
@@ -151,6 +221,13 @@
 </div>
 {% endif %}
 
+{# -------------------------------------------------------
+   Fahrhistorie
+   Zeigt alle abgeschlossenen und aktiven Fahrten des Riders
+   in einer Tabelle, sortiert nach ID absteigend
+   (neueste Fahrten zuerst – Sortierung in routes.py).
+   Dauer und Preis zeigen "-" solange die Fahrt aktiv ist.
+   ------------------------------------------------------- #}
 <h3 class="section-title mb-3">Bisherige Fahrten</h3>
 
 <div class="card border-0 rounded-4 shadow-sm">
@@ -168,13 +245,16 @@
                         </tr>
                     </thead>
                     <tbody>
+                        {# Jinja2-Schleife: Iteriert über alle Fahrten des Riders #}
                         {% for rental in rentals %}
                             <tr>
                                 <td>{{ rental.id }}</td>
                                 <td>{{ rental.scooter.scooter_code }}</td>
                                 <td>{{ rental.status }}</td>
+                                {# Dauer: Zeigt Minuten oder "-" wenn Fahrt noch aktiv #}
                                 <td>{{ rental.duration_minutes if rental.duration_minutes else "-" }} Min.</td>
                                 <td>
+                                    {# Preis: Zeigt CHF-Betrag oder "-" wenn noch nicht berechnet #}
                                     {% if rental.total_price %}
                                         CHF {{ rental.total_price }}
                                     {% else %}
@@ -187,8 +267,10 @@
                 </table>
             </div>
         {% else %}
+            {# Fallback-Meldung wenn noch keine Fahrten vorhanden #}
             <p class="mb-0 text-muted">Es sind noch keine Fahrten vorhanden.</p>
         {% endif %}
     </div>
 </div>
+
 {% endblock %}
