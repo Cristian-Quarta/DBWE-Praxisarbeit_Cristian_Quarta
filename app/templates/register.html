@@ -1,10 +1,25 @@
+{# ==============================================================
+   register.html – Registrierungsseite von ScootNow
+   Öffentlich zugänglich – kein Login erforderlich.
+   Zeigt ein Formular zur Erstellung eines neuen Benutzerkontos.
+   Felder: Benutzername, E-Mail, Rolle, Passwort.
+   Bei Erfolg: Weiterleitung zu /login mit Flash-Meldung.
+   Bei Fehler (doppelter Name/E-Mail): Flash-Meldung via base.html.
+   Erbt das Basis-Layout von base.html.
+   Autor: Cristian Quarta | DBWE.TA1A.PA | 2026
+   ============================================================== #}
+
 {% extends "base.html" %}
 
 {% block content %}
+
+{# Zentrierte Karte – max. 7 Spalten breit (col-lg-7) #}
 <div class="row justify-content-center">
     <div class="col-lg-7">
         <div class="card border-0 rounded-4 shadow-sm">
             <div class="card-body p-5">
+
+                {# Seitentitel #}
                 <p class="text-uppercase text-muted fw-semibold mb-2">Neues Benutzerkonto</p>
                 <h2 class="section-title mb-3">Registrierung</h2>
                 <p class="text-muted mb-4">
@@ -12,43 +27,82 @@
                     ein Passwort sowie eine Rolle, um ScootNow nutzen zu können.
                 </p>
 
+                {# -------------------------------------------------------
+                   Registrierungsformular
+                   Sendet POST-Request an /register (gleiche URL).
+                   Die Verarbeitung erfolgt in routes.py (register-Funktion).
+                   Alle Felder sind Pflichtfelder (required).
+                   ------------------------------------------------------- #}
                 <form method="POST">
+
+                    {# Eingabefeld: Benutzername
+                       Muss eindeutig sein – Prüfung erfolgt in routes.py.
+                       Bei Duplikat: Flash-Meldung und Redirect zurück. #}
                     <div class="mb-3">
                         <label class="form-label">Benutzername</label>
-                        <input type="text" name="username" class="form-control form-control-lg rounded-3" required>
+                        <input type="text"
+                               name="username"
+                               class="form-control form-control-lg rounded-3"
+                               required>
                     </div>
 
+                    {# Eingabefeld: E-Mail-Adresse
+                       type="email" aktiviert browser-seitige Format-Validierung.
+                       Muss eindeutig sein – Prüfung erfolgt in routes.py. #}
                     <div class="mb-3">
                         <label class="form-label">E-Mail-Adresse</label>
-                        <input type="email" name="email" class="form-control form-control-lg rounded-3" required>
+                        <input type="email"
+                               name="email"
+                               class="form-control form-control-lg rounded-3"
+                               required>
                     </div>
 
+                    {# Dropdown: Rolle
+                       Bestimmt den Zugriffsbereich des Benutzers:
+                       - "rider":    Kann Scooter mieten und Fahrten abrechnen
+                       - "provider": Kann Scooter verwalten (hinzufügen, bearbeiten, löschen)
+                       Standardmässig ist "rider" vorausgewählt. #}
                     <div class="mb-3">
                         <label class="form-label">Rolle</label>
-                        <select name="role" class="form-select form-select-lg rounded-3" required>
+                        <select name="role"
+                                class="form-select form-select-lg rounded-3"
+                                required>
                             <option value="rider">Fahrer / Nutzer</option>
                             <option value="provider">Verleihanbieter</option>
                         </select>
                     </div>
 
+                    {# Eingabefeld: Passwort
+                       type="password" verhindert die Anzeige im Klartext.
+                       Das Passwort wird in routes.py via generate_password_hash()
+                       gehasht und nie im Klartext in der Datenbank gespeichert. #}
                     <div class="mb-4">
                         <label class="form-label">Passwort</label>
-                        <input type="password" name="password" class="form-control form-control-lg rounded-3" required>
+                        <input type="password"
+                               name="password"
+                               class="form-control form-control-lg rounded-3"
+                               required>
                     </div>
 
+                    {# Submit-Button: Sendet das Registrierungsformular ab #}
                     <div class="d-grid">
-                        <button type="submit" class="btn btn-primary-custom btn-lg">Registrieren</button>
+                        <button type="submit" class="btn btn-primary-custom btn-lg">
+                            Registrieren
+                        </button>
                     </div>
                 </form>
 
                 <hr class="my-4">
 
+                {# Link zur Login-Seite für bereits registrierte Benutzer #}
                 <p class="mb-0 text-muted">
                     Bereits registriert?
                     <a href="{{ url_for('login') }}">Zum Login</a>
                 </p>
+
             </div>
         </div>
     </div>
 </div>
+
 {% endblock %}
