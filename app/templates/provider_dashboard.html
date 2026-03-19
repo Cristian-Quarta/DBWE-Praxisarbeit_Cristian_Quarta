@@ -1,6 +1,21 @@
+{# ==============================================================
+   provider_dashboard.html – Provider-Dashboard von ScootNow
+   Nur für eingeloggte Benutzer mit Rolle "provider" zugänglich.
+   Zeigt: Statistiken, Scooter-Flotte mit Verwaltungsoptionen
+          (Bearbeiten / Löschen) und QR-Code-Anzeige.
+   Erbt das Basis-Layout von base.html.
+   Autor: Cristian Quarta | DBWE.TA1A.PA | 2026
+   ============================================================== #}
+
 {% extends "base.html" %}
 
 {% block content %}
+
+{# -------------------------------------------------------
+   Dashboard-Header
+   Zeigt Seitentitel und den eingeloggten Provider-Namen.
+   current_user wird von flask_login bereitgestellt.
+   ------------------------------------------------------- #}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <p class="text-uppercase text-muted fw-semibold mb-1">Anbieterbereich</p>
@@ -12,7 +27,15 @@
     </div>
 </div>
 
+{# -------------------------------------------------------
+   Statistik-Karten (3 Spalten)
+   Karte 1: Gesamtanzahl eigener Scooter
+   Karte 2: Anzahl verfügbarer Scooter (Jinja2-Filter)
+   Karte 3: Anzahl Scooter in Wartung (Jinja2-Filter)
+   ------------------------------------------------------- #}
 <div class="row mb-4">
+
+    {# Karte 1: Gesamtanzahl eigener Scooter des Providers #}
     <div class="col-md-4 mb-3">
         <div class="card stats-card h-100">
             <div class="card-body p-4">
@@ -22,43 +45,68 @@
         </div>
     </div>
 
+    {# Karte 2: Verfügbare Scooter
+       Jinja2-Filter selectattr zählt nur Scooter mit status="available" #}
     <div class="col-md-4 mb-3">
         <div class="card stats-card h-100">
             <div class="card-body p-4">
-                <h3 class="mb-1">{{ scooters|selectattr("status", "equalto", "available")|list|length }}</h3>
+                <h3 class="mb-1">
+                    {{ scooters|selectattr("status", "equalto", "available")|list|length }}
+                </h3>
                 <p class="mb-0">Verfügbare Scooter</p>
             </div>
         </div>
     </div>
 
+    {# Karte 3: Scooter in Wartung
+       Jinja2-Filter selectattr zählt Scooter mit status="maintenance" #}
     <div class="col-md-4 mb-3">
         <div class="card stats-card h-100">
             <div class="card-body p-4">
-                <h3 class="mb-1">{{ scooters|selectattr("status", "equalto", "maintenance")|list|length }}</h3>
+                <h3 class="mb-1">
+                    {{ scooters|selectattr("status", "equalto", "maintenance")|list|length }}
+                </h3>
                 <p class="mb-0">In Wartung</p>
             </div>
         </div>
     </div>
 </div>
 
+{# Button: Neuen Scooter hinzufügen – verlinkt zu /provider/scooters/add #}
 <div class="mb-4">
     <a href="{{ url_for('add_scooter') }}" class="btn btn-primary-custom btn-lg">
         Neuen Scooter hinzufügen
     </a>
 </div>
 
+{# -------------------------------------------------------
+   Scooter-Flotte des Providers
+   Wird nur angezeigt wenn mindestens ein Scooter vorhanden.
+   Zeigt alle eigenen Scooter mit:
+   - Status-Badge (vierstufige Logik)
+   - Details (Standort, Akku, Preis, GPS, QR-Code)
+   - QR-Code-Bild (extern generiert)
+   - Aktionsbuttons: Bearbeiten und Löschen
+   ------------------------------------------------------- #}
 {% if scooters %}
 <div class="row">
+    {# Jinja2-Schleife: Iteriert über alle Scooter des Providers #}
     {% for scooter in scooters %}
         <div class="col-md-6 col-lg-4 mb-4">
             <div class="card scooter-card h-100">
                 <div class="card-body p-4">
+
+                    {# Scooter-Header: Code, Modell und Status-Badge
+                       Vierstufige Badge-Logik für Provider:
+                       Grün   = verfügbar UND Akku >= 20%
+                       Gelb   = in Wartung (status="maintenance")
+                       Rot    = vermietet (status="rented")
+                       Grau   = sonstiger Status #}
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <div>
                             <h5 class="fw-bold mb-1">{{ scooter.scooter_code }}</h5>
                             <div class="text-muted">{{ scooter.model }}</div>
                         </div>
-
                         {% if scooter.status == "available" and scooter.battery_level >= 20 %}
                             <span class="badge rounded-pill bg-success">Verfügbar</span>
                         {% elif scooter.status == "maintenance" %}
@@ -71,11 +119,16 @@
                     </div>
 
                     <div class="row align-items-center mb-3">
+
+                        {# Scooter-Details: alle relevanten Attribute #}
                         <div class="col-7">
                             <p class="mb-2"><strong>Standort:</strong> {{ scooter.location }}</p>
                             <p class="mb-2"><strong>Akku:</strong> {{ scooter.battery_level }}%</p>
                             <p class="mb-2"><strong>Preis / Min.:</strong> CHF {{ scooter.price_per_minute }}</p>
                             <p class="mb-2"><strong>Basispreis:</strong> CHF {{ scooter.base_price }}</p>
+
+                            {# GPS-Koordinaten: Zeigt Koordinaten oder "-" wenn nicht erfasst
+                               Jinja2-Bedingung prüft ob latitude und longitude nicht None sind #}
                             <p class="mb-2"><strong>GPS:</strong>
                                 {% if scooter.latitude is not none and scooter.longitude is not none %}
                                     {{ scooter.latitude }}, {{ scooter.longitude }}
@@ -86,6 +139,9 @@
                             <p class="mb-0"><strong>QR-Code:</strong> {{ scooter.qr_code }}</p>
                         </div>
 
+                        {# QR-Code-Bild: Wird dynamisch via externem Dienst generiert.
+                           Dient dem Provider zur Kontrolle und zum Ausdrucken
+                           des QR-Codes für den physischen Scooter. #}
                         <div class="col-5 text-center">
                             <img
                                 src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data={{ scooter.qr_code }}"
@@ -96,27 +152,40 @@
                         </div>
                     </div>
 
+                    {# Aktionsbuttons: Bearbeiten und Löschen
+                       Bearbeiten: GET-Link zu /provider/scooters/edit/{id}
+                       Löschen:    POST-Formular an /provider/scooters/delete/{id}
+                                   (POST statt GET verhindert versehentliches Löschen) #}
                     <div class="d-grid gap-2">
-                        <a href="{{ url_for('edit_scooter', scooter_id=scooter.id) }}" class="btn btn-outline-primary">
+                        <a href="{{ url_for('edit_scooter', scooter_id=scooter.id) }}"
+                           class="btn btn-outline-primary">
                             Bearbeiten
                         </a>
 
+                        {# Lösch-Formular: Sendet POST-Request um den Scooter zu löschen.
+                           routes.py prüft die Berechtigung (provider_id == current_user.id) #}
                         <form method="POST" action="{{ url_for('delete_scooter', scooter_id=scooter.id) }}">
                             <button class="btn btn-outline-danger w-100">
                                 Scooter löschen
                             </button>
                         </form>
                     </div>
+
                 </div>
             </div>
         </div>
     {% endfor %}
 </div>
+
 {% else %}
-<div class="card border-0 rounded-4 shadow-sm">
-    <div class="card-body p-4">
-        <p class="mb-0 text-muted">Aktuell sind noch keine Scooter für diesen Anbieter erfasst.</p>
+    {# Fallback-Meldung wenn noch keine Scooter erfasst sind #}
+    <div class="card border-0 rounded-4 shadow-sm">
+        <div class="card-body p-4">
+            <p class="mb-0 text-muted">
+                Aktuell sind noch keine Scooter für diesen Anbieter erfasst.
+            </p>
+        </div>
     </div>
-</div>
 {% endif %}
+
 {% endblock %}
