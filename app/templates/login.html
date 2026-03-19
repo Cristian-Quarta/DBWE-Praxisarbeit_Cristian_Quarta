@@ -1,10 +1,24 @@
+{# ==============================================================
+   login.html – Login-Seite von ScootNow
+   Öffentlich zugänglich – kein Login erforderlich.
+   Zeigt ein Formular zur Benutzeranmeldung mit Benutzername
+   und Passwort. Bei Erfolg: Weiterleitung zum Dashboard.
+   Bei Fehler: Flash-Meldung via base.html.
+   Erbt das Basis-Layout von base.html.
+   Autor: Cristian Quarta | DBWE.TA1A.PA | 2026
+   ============================================================== #}
+
 {% extends "base.html" %}
 
 {% block content %}
+
+{# Zentrierte Karte – max. 6 Spalten breit (col-lg-6) #}
 <div class="row justify-content-center">
     <div class="col-lg-6">
         <div class="card border-0 rounded-4 shadow-sm">
             <div class="card-body p-5">
+
+                {# Seitentitel #}
                 <p class="text-uppercase text-muted fw-semibold mb-2">Benutzeranmeldung</p>
                 <h2 class="section-title mb-3">Login</h2>
                 <p class="text-muted mb-4">
@@ -12,30 +26,54 @@
                     und die Mietfunktionen von ScootNow zuzugreifen.
                 </p>
 
+                {# -------------------------------------------------------
+                   Login-Formular
+                   Sendet POST-Request an /login (gleiche URL).
+                   Die Verarbeitung erfolgt in routes.py (login-Funktion).
+                   Beide Felder sind Pflichtfelder (required).
+                   Das Passwort wird verschlüsselt übertragen (type="password").
+                   ------------------------------------------------------- #}
                 <form method="POST">
+
+                    {# Eingabefeld: Benutzername #}
                     <div class="mb-3">
                         <label class="form-label">Benutzername</label>
-                        <input type="text" name="username" class="form-control form-control-lg rounded-3" required>
+                        <input type="text"
+                               name="username"
+                               class="form-control form-control-lg rounded-3"
+                               required>
                     </div>
 
+                    {# Eingabefeld: Passwort
+                       type="password" verhindert die Anzeige des Klartextpassworts.
+                       Das Passwort wird in routes.py via check_password_hash() geprüft. #}
                     <div class="mb-4">
                         <label class="form-label">Passwort</label>
-                        <input type="password" name="password" class="form-control form-control-lg rounded-3" required>
+                        <input type="password"
+                               name="password"
+                               class="form-control form-control-lg rounded-3"
+                               required>
                     </div>
 
+                    {# Submit-Button: Sendet das Formular ab #}
                     <div class="d-grid">
-                        <button type="submit" class="btn btn-primary-custom btn-lg">Einloggen</button>
+                        <button type="submit" class="btn btn-primary-custom btn-lg">
+                            Einloggen
+                        </button>
                     </div>
                 </form>
 
                 <hr class="my-4">
 
+                {# Link zur Registrierungsseite für neue Benutzer #}
                 <p class="mb-0 text-muted">
                     Noch kein Benutzerkonto?
                     <a href="{{ url_for('register') }}">Jetzt registrieren</a>
                 </p>
+
             </div>
         </div>
     </div>
 </div>
+
 {% endblock %}
